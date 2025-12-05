@@ -192,7 +192,7 @@ def download_data(region):
         OVERWRITE = True
         print(f"Downloading {region} data (this may take some time)...")
         G = ox.graph_from_place(
-            f"{region}, Massachusetts",
+            f"{region}, Texas",
             retain_all=True,
             truncate_by_edge=True,
             simplify=False,
@@ -510,6 +510,6 @@ def main(region, key, value, rebuild=False):
 
 if __name__ == '__main__':
     # city = ['Cambridge', 'wikipedia', 'en:Cambridge, Massachusetts']
-    city = ['Boston', 'wikipedia', 'en:Boston']
+    city = ['Houston', 'wikipedia', 'en:Texas']
 
     main(*city, True)
