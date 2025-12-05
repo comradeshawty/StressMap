@@ -100,19 +100,19 @@ def plot_lts_geojson(region, all_lts):
     shutil.copy(json_plot_file, f'{plotFolder}/LTS.json')
     return
 
-def main(region, format="json"):
-    Path(plotFolder).mkdir(exist_ok=True)
+#def main(region, format="json"):
+#    Path(plotFolder).mkdir(exist_ok=True)
 
-    all_lts = load_data(region)
+ #   all_lts = load_data(region)
 
     # plot_lts_static(region, all_lts)
-    if format == "json":
-        plot_lts_geojson(region, all_lts)
+#    if format == "json":
+   #     plot_lts_geojson(region, all_lts)
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
     # city = 'Cambridge'
-    city = 'Boston'
+ #   city = 'Boston'
     # city = 'Somerville'
 
-    main(city)
+ #   main(city)
