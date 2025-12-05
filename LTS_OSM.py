@@ -496,20 +496,20 @@ def combine_data(fullRegion, regionList):
     # combine_gdf_nodes(fullRegion, regionList)
 
 # %% Run as Script
-def main(region, key, value, rebuild=False):
-    global OVERWRITE
-    OVERWRITE = rebuild
-    Path(dataFolder).mkdir(exist_ok=True)
+#def main(region, key, value, rebuild=False):
+  #  global OVERWRITE
+#    OVERWRITE = rebuild
+#    Path(dataFolder).mkdir(exist_ok=True)
 
-    build_query(region, key, value)
-    download_osm(region)
-    extract_tags(region)
-    gdfNodes, gdfEdges = download_data(region)
-    all_lts = lts_edges(region, gdfEdges)
+#    build_query(region, key, value)
+#    download_osm(region)
+ #   extract_tags(region)
+#    gdfNodes, gdfEdges = download_data(region)
+#    all_lts = lts_edges(region, gdfEdges)
     # gdf_nodes = lts_nodes(region, gdfNodes, all_lts) # Not using this yet/atm.
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
     # city = ['Cambridge', 'wikipedia', 'en:Cambridge, Massachusetts']
-    city = ['Houston', 'wikipedia', 'en:Texas']
-
-    main(*city, True)
+#    city = ['Houston', 'wikipedia', 'en:Texas']
+#
+#    main(*city, True)
