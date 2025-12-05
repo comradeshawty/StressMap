@@ -1,8 +1,8 @@
 # Query key and value can be determined by inspecting regions on OSM
 CITIES = {
-    "Arlington": {
+    "Houston": {
         "key": "wikipedia",
-        "value": "en:Arlington, Massachusetts"
+        "value": "en:Houston,Texas"
     },
     "Belmont": {
         "key": "wikipedia",
