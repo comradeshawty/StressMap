@@ -241,38 +241,38 @@ def plot_grid_boundary(gdf_nodes, alpha_shape, valid_points):
     plt.show()
 
 # %% Run as script
-def main(city, trip_time, travel_speed, x, y):
+#def main(city, trip_time, travel_speed, x, y):
     # Load files and prep for calcs
-    gdf_nodes, all_lts, G_lts = load_files(city)
+  #  gdf_nodes, all_lts, G_lts = load_files(city)
 
-    G1, G2, G3, G4, G1b, G2b, G3b, G4b = lts_map_graphs(G_lts, all_lts, gdf_nodes)
+ #   G1, G2, G3, G4, G1b, G2b, G3b, G4b = lts_map_graphs(G_lts, all_lts, gdf_nodes)
 
     # Bulk Calculations
-    G1b, G2b, G3b, G4b = edge_travel_times(travel_speed, G1b, G2b, G3b, G4b)
+  #  G1b, G2b, G3b, G4b = edge_travel_times(travel_speed, G1b, G2b, G3b, G4b)
 
     # Use the node closest to the given point
-    point, nodeID = nearest_node(x, y, G1)
+  #  point, nodeID = nearest_node(x, y, G1)
 
-    node_colors, node_count = point_isochrone(nodeID, trip_time, G1b, G2b, G3b, G4b)
+ #   node_colors, node_count = point_isochrone(nodeID, trip_time, G1b, G2b, G3b, G4b)
 
-    point_isochrone_plot(city, point, node_colors, trip_time, G4b)
+ #   point_isochrone_plot(city, point, node_colors, trip_time, G4b)
 
     # Create sampling points for heatmap
-    alpha_shape = boundry_polygon(gdf_nodes, 200)
-    valid_points = grid_points(alpha_shape, 25)
-    plot_grid_boundary(gdf_nodes, alpha_shape, valid_points)
+ #   alpha_shape = boundry_polygon(gdf_nodes, 200)
+ #   valid_points = grid_points(alpha_shape, 25)
+ #   plot_grid_boundary(gdf_nodes, alpha_shape, valid_points)
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
     # Settings
-    city = "Cambridge"
+   # city = "Cambridge"
     # city = "GreaterBoston"
 
     # point to start isochrone plot from
-    y_init = 42.3732
-    x_init = -71.1108
+  #  y_init = 42.3732
+  #  x_init = -71.1108
     
-    travelSpeed = 15 #biking speed in km/hour
-    tripTime = 15 # minutes
+   # travelSpeed = 15 #biking speed in km/hour
+  #  tripTime = 15 # minutes
 
-    main(city, tripTime, travelSpeed, x_init, y_init)
+ #   main(city, tripTime, travelSpeed, x_init, y_init)
     
