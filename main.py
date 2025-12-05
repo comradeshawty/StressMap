@@ -25,7 +25,7 @@ def plot_func(args, cities=None):
 
 def combine_func(args):
     import LTS_OSM  # imported directly in the command to improve argparse performance
-    LTS_OSM.combine_data('GreaterBoston', args.cities.split(','))
+    LTS_OSM.combine_data('Houston', args.cities.split(','))
 
 class StressMapCli(object):
     def __init__(self):
