@@ -488,24 +488,104 @@ def define_narrow_wide(gdf_edges):
 
     return gdf_edges
 
-def define_adt(gdf_edges, rating_dict):
-    '''
-    Add the Average Daily Traffic (ADT) value to each segment to use the right row of LTS tables.
+def define_adt(gdf_edges, rating_dict, txdot_aadt='txdot_aadt.geojson', nearest_max_distance=2):
+    """
+    Add the Average Daily Traffic (ADT) value to each segment using (in order):
+      1) spatial join to txdot_aadt (if provided)
+      2) assumptions via apply_rules (existing behavior)
 
-    Use assumptions based on roadway type. 
-
-    FUTURE: Get ADT measurements from cities or Streetlight to improve values.
-    '''
+    txdot_aadt: GeoDataFrame containing geometry and an AADT column (optional).
+    aadt_col_candidates: list of possible column names to try for AADT lookup.
+    nearest_max_distance: max distance for sjoin_nearest (units = CRS units). If None, no distance limit.
+    """
+    import geopandas as gpd
+    import numpy as np
 
     prefix = 'ADT'
     defaultRule = f'{prefix}_'
 
-    gdf_edges[f'{prefix}'] = 1500 # FIXME is this the right default?
+    # Work on a copy to avoid mutating caller's df unexpectedly
+    gdf_edges = gdf_edges.copy()
+
+    # Initialize ADT columns with NaN so we know which got populated from TxDOT
+    gdf_edges[f'{prefix}'] = np.nan
     gdf_edges[f'{prefix}_rule_num'] = defaultRule
     gdf_edges[f'{prefix}_rule'] = 'Assumed'
     gdf_edges[f'{prefix}_condition'] = 'default'
 
-    gdf_edges = apply_rules(gdf_edges, rating_dict, prefix)
+    # --- Step 1: populate from txdot_aadt if provided ---
+    if txdot_aadt is not None and len(txdot_aadt) > 0:
+        tx = gpd.read_file(txdot_aadt)
+        aadt_col = 'aadt_2024'
+        # for col in candidates:
+        #     if col in tx.columns:
+        #         aadt_col = col
+        #         break
+
+        # if aadt_col is None:
+        #     raise ValueError("Could not find an AADT column in txdot_aadt. Pass column name via aadt_col_candidates.")
+
+        # # Ensure the CRS match for spatial join
+        tx = tx.to_crs(epsg=26916)
+        gdf_edges = gdf_edges.to_crs(epsg=26916)
+
+        # 1a) Try intersects join (exact overlaps)
+        try:
+            joined = gpd.sjoin(gdf_edges, tx[[aadt_col, 'geometry']], how='left', predicate='dwithin',distance=5)
+        except TypeError:
+            # older geopandas uses 'op' instead of 'predicate'
+            joined = gpd.sjoin(gdf_edges, tx[[aadt_col, 'geometry']], how='left', op='intersects')
+
+        # If multiple tx segments match an edge, take the first match (you can change aggregation if desired)
+      #  joined = joined.reset_index().rename(columns={'index': 'orig_index'})
+      #  joined = joined.drop_duplicates(subset='orig_index', keep='first').set_index('orig_index')
+
+        # Assign matched AADT values back to edges
+        mask_matched = joined[aadt_col].notna()
+        if mask_matched.any():
+            gdf_edges.loc[joined.index[mask_matched], prefix] = joined.loc[mask_matched, aadt_col].values
+            gdf_edges.loc[joined.index[mask_matched], f'{prefix}_rule'] = 'TxDOT AADT'
+            gdf_edges.loc[joined.index[mask_matched], f'{prefix}_condition'] = 'txdot_intersect'
+            gdf_edges.loc[joined.index[mask_matched], f'{prefix}_rule_num'] = 'txdot'
+
+        # 1b) For any remaining unmatched edges, try nearest (useful if geometries don't intersect)
+        # remaining_idx = gdf_edges[gdf_edges[prefix].isna()].index
+        # if len(remaining_idx) > 0:
+        #     remaining = gdf_edges.loc[remaining_idx].copy()
+        #     # sjoin_nearest may not exist in very old geopandas; guard with try/except
+        #     try:
+        #         # Build right-hand tx df with only needed column to reduce memory
+        #         tx_small = tx[[aadt_col, 'geometry']].copy()
+        #         if nearest_max_distance is not None:
+        #             nearest = gpd.sjoin_nearest(remaining, tx_small, how='left', max_distance=nearest_max_distance, distance_col='_dist')
+        #         else:
+        #             nearest = gpd.sjoin_nearest(remaining, tx_small, how='left', distance_col='_dist')
+
+        #         nearest = nearest.reset_index().rename(columns={'index': 'orig_index'})
+        #         nearest = nearest.drop_duplicates(subset='orig_index', keep='first').set_index('orig_index')
+
+        #         mask_nearest = nearest[aadt_col].notna()
+        #         if mask_nearest.any():
+        #             gdf_edges.loc[nearest.index[mask_nearest], prefix] = nearest.loc[mask_nearest, aadt_col].values
+        #             gdf_edges.loc[nearest.index[mask_nearest], f'{prefix}_rule'] = 'TxDOT AADT'
+        #             gdf_edges.loc[nearest.index[mask_nearest], f'{prefix}_condition'] = 'txdot_nearest'
+        #             gdf_edges.loc[nearest.index[mask_nearest], f'{prefix}_rule_num'] = 'txdot'
+        #     except Exception:
+        #         # If nearest join fails for any reason, skip it silently (you may want to log)
+        #         pass
+
+    # --- Step 2: fill remaining rows with the existing assumptions via apply_rules ---
+    missing_mask = gdf_edges[f'{prefix}'].isna()
+    if missing_mask.any():
+        # apply_rules likely expects a full geodataframe; call it only on missing rows and reassign
+        filled_subset = apply_rules(gdf_edges.loc[missing_mask].copy(), rating_dict, prefix)
+        # Ensure the returned filled_subset has the same index; then place back
+        gdf_edges.loc[missing_mask, :] = filled_subset.loc[filled_subset.index, :]
+
+    # Final safety: if any ADT still missing, set to a final default (keep your original default)
+    final_default = 1500
+    gdf_edges[f'{prefix}'] = gdf_edges[f'{prefix}'].fillna(final_default)
+    gdf_edges=gdf_edges.to_crs(epsg=4326)
 
     return gdf_edges
 
